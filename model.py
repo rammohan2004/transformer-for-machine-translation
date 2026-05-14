@@ -539,6 +539,76 @@ class Transformer(nn.Module):
 
     def __init__(
         self,
+        src_vocab_size: int   = None, 
+        tgt_vocab_size: int   = None, 
+        # ⚠️ CRITICAL: Ensure these defaults match your best trained model!
+        d_model:        int   = 256,  
+        N:              int   = 3,    
+        num_heads:      int   = 8,
+        d_ff:           int   = 512,
+        dropout:        float = 0.1,
+    ) -> None:
+        super().__init__()
+
+        self.d_model = d_model
+
+        # 1. Load vocab + tokenizer 
+        self._load_vocab_and_tokenizer()
+
+        # 2. Resolve vocab sizes 
+        if src_vocab_size is None:
+            src_vocab_size = len(self.src_vocab)
+        if tgt_vocab_size is None:
+            tgt_vocab_size = len(self.tgt_vocab)
+
+        self.src_vocab_size = src_vocab_size
+        self.tgt_vocab_size = tgt_vocab_size
+
+        # 3. Build model components
+        self.src_embedding = nn.Embedding(src_vocab_size, d_model, padding_idx=1)
+        self.tgt_embedding = nn.Embedding(tgt_vocab_size, d_model, padding_idx=1)
+        self.pos_encoding = PositionalEncoding(d_model, dropout)
+
+        enc_layer = EncoderLayer(d_model, num_heads, d_ff, dropout)
+        self.encoder = Encoder(enc_layer, N)
+
+        dec_layer = DecoderLayer(d_model, num_heads, d_ff, dropout)
+        self.decoder = Decoder(dec_layer, N)
+
+        self.output_projection = nn.Linear(d_model, tgt_vocab_size)
+
+        # 4. ALWAYS load the weights (Hardcode your Drive ID here)
+        self._load_checkpoint("best_model.pt")
+
+    def _load_checkpoint(self, checkpoint_path: str):
+        """
+        Downloads weights from Google Drive and loads into this model.
+        """
+        # ⚠️ PASTE YOUR TRAINED MODEL'S DRIVE ID HERE
+        GDRIVE_FILE_ID = "1ZDZteVNIwFpT5frpvgAWAlKAtcAooPTb" 
+
+        if not os.path.exists(checkpoint_path):
+            print("Downloading weights from Google Drive...")
+            gdown.download(
+                id=GDRIVE_FILE_ID,
+                output=checkpoint_path,
+                quiet=False
+            )
+
+        print("Loading weights into model...")
+        ckpt = torch.load(checkpoint_path, map_location='cpu')
+        
+        # Ensure we only load the model state dict, not the optimizer/epoch data
+        if 'model_state_dict' in ckpt:
+            self.load_state_dict(ckpt['model_state_dict'])
+        else:
+            # Fallback just in case it was saved differently
+            self.load_state_dict(ckpt) 
+            
+        print(f"Checkpoint loaded successfully!")
+
+    '''def __init__(
+        self,
         src_vocab_size: int   = None,   # if None, built from Multi30k train
         tgt_vocab_size: int   = None,   # if None, built from Multi30k train
         d_model:        int   = 512,
@@ -596,7 +666,7 @@ class Transformer(nn.Module):
             )
             ckpt = torch.load(checkpoint_path, map_location='cpu')
             self.load_state_dict(ckpt['model_state_dict'])
-            print(f"Loaded checkpoint from {checkpoint_path}")
+            print(f"Loaded checkpoint from {checkpoint_path}") '''
 
     # ── Internal helpers ──────────────────────────────────────────────
 
@@ -630,7 +700,7 @@ class Transformer(nn.Module):
 
 
 
-    def _load_checkpoint(self, checkpoint_path: str):
+    '''def _load_checkpoint(self, checkpoint_path: str):
         """
         Downloads weights from Google Drive and loads into this model.
         Per announcement: all weight loading inside __init__.
@@ -646,7 +716,7 @@ class Transformer(nn.Module):
 
         ckpt = torch.load(checkpoint_path, map_location='cpu')
         self.load_state_dict(ckpt['model_state_dict'])
-        print(f"Checkpoint loaded from {checkpoint_path}")
+        print(f"Checkpoint loaded from {checkpoint_path}")'''
 
     # ── AUTOGRADER HOOKS — do NOT modify signatures ───────────────────
 
