@@ -1,0 +1,8 @@
+env/
+__pycache__/
+wandb/
+.DS_Store
+notebooks/
+data/dataset
+.venv/
+.venv
