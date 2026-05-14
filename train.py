@@ -746,6 +746,7 @@ def run_training_experiment() -> None:
         num_heads      = config.num_heads,
         d_ff           = config.d_ff,
         dropout        = config.dropout,
+        load_weights   = False,
     ).to(device)
 
     # Experiment 2.2: disable scaling in attention if requested

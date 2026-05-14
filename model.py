@@ -542,11 +542,13 @@ class Transformer(nn.Module):
         src_vocab_size: int   = None, 
         tgt_vocab_size: int   = None, 
         # ⚠️ CRITICAL: Ensure these defaults match your best trained model!
-        d_model:        int   = 256,  
-        N:              int   = 3,    
+        d_model:        int   = 512,  
+        N:              int   = 6,    
         num_heads:      int   = 8,
-        d_ff:           int   = 512,
+        d_ff:           int   = 2048,
         dropout:        float = 0.1,
+        checkpoint_path: str = None,
+        load_weights:    bool = True,
     ) -> None:
         super().__init__()
 
@@ -578,7 +580,11 @@ class Transformer(nn.Module):
         self.output_projection = nn.Linear(d_model, tgt_vocab_size)
 
         # 4. ALWAYS load the weights (Hardcode your Drive ID here)
-        self._load_checkpoint("best_model.pt")
+        if load_weights:
+            if checkpoint_path is None:
+                checkpoint_path = "best_model.pt"
+            
+            self._load_checkpoint(checkpoint_path)
 
     def _load_checkpoint(self, checkpoint_path: str):
         """
