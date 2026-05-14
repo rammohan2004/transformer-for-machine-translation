@@ -67,9 +67,21 @@ class Multi30kDataset:
         # TODO: Load dataset, load spacy tokenizers for de and en
         self.split = split
 
-        # Load spaCy tokenizers
-        self.spacy_de = spacy.load('de_core_news_sm')
-        self.spacy_en = spacy.load('en_core_web_sm')
+        # Load spaCy tokenizers safely
+        import spacy
+        from spacy.cli import download
+
+        try:
+            self.spacy_de = spacy.load('de_core_news_sm')
+        except OSError:
+            download('de_core_news_sm')
+            self.spacy_de = spacy.load('de_core_news_sm')
+
+        try:
+            self.spacy_en = spacy.load('en_core_web_sm')
+        except OSError:
+            download('en_core_web_sm')
+            self.spacy_en = spacy.load('en_core_web_sm')
 
         # Load raw dataset from HuggingFace
         raw = load_dataset('bentrevett/multi30k')

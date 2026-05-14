@@ -604,9 +604,9 @@ class Transformer(nn.Module):
         """
         Builds vocab from Multi30k train split and loads spaCy tokenizer.
         Called inside __init__ so infer() works with no external setup.
-        Per announcement: all vocab/tokenizer loading inside __init__.
         """
         import spacy
+        from spacy.cli import download
         from dataset import (Multi30kDataset,
                              SOS_IDX, EOS_IDX, PAD_IDX)
 
@@ -614,8 +614,12 @@ class Transformer(nn.Module):
         self.EOS_IDX = EOS_IDX
         self.PAD_IDX = PAD_IDX
 
-        # German tokenizer for infer()
-        self.spacy_de = spacy.load('de_core_news_sm')
+        # German tokenizer for infer() safely
+        try:
+            self.spacy_de = spacy.load('de_core_news_sm')
+        except OSError:
+            download('de_core_news_sm')
+            self.spacy_de = spacy.load('de_core_news_sm')
 
         # Build vocab from train split — same as during training
         train_ds = Multi30kDataset('train')
@@ -623,6 +627,8 @@ class Transformer(nn.Module):
 
         self.src_vocab = train_ds.src_vocab   # German vocab
         self.tgt_vocab = train_ds.tgt_vocab   # English vocab
+
+
 
     def _load_checkpoint(self, checkpoint_path: str):
         """
