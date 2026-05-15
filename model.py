@@ -542,7 +542,7 @@ class Transformer(nn.Module):
         src_vocab_size: int   = None, 
         tgt_vocab_size: int   = None, 
         # ⚠️ CRITICAL: Ensure these defaults match your best trained model!
-        d_model:        int   = 256,  #v7
+        d_model:        int   = 256,  #v8
         N:              int   = 3,    
         num_heads:      int   = 8,
         d_ff:           int   = 512,
@@ -591,7 +591,7 @@ class Transformer(nn.Module):
         Downloads weights from Google Drive and loads into this model.
         """
         # ⚠️ PASTE YOUR TRAINED MODEL'S DRIVE ID HERE
-        GDRIVE_FILE_ID = "1mwXgOWd98VNNmHNB6WImQ84aaFWzqT8-" 
+        GDRIVE_FILE_ID = "16IUIRKZm3s2Y1c-uJ8QLhelktdPk-F5o" 
 
         if not os.path.exists(checkpoint_path):
             print("Downloading weights from Google Drive...")
@@ -843,6 +843,7 @@ class Transformer(nn.Module):
                     break
 
         # Step 5: Convert indices → words, skip special tokens
+        # Step 5: Convert indices → words, skip special tokens
         output_ids = ys.squeeze(0).tolist()
         words = [
             self.tgt_vocab.itos.get(idx, '<unk>')
@@ -850,7 +851,19 @@ class Transformer(nn.Module):
             if idx not in (self.SOS_IDX, self.EOS_IDX, self.PAD_IDX)
         ]
 
-        return ' '.join(words)
+        text = ' '.join(words)
+        
+        # ── CRITICAL DETOKENIZATION FIX ──
+        import re
+        # 1. Remove spaces before punctuation ( . , ! ? ; )
+        text = re.sub(r'\s+([.,!?;\'])', r'\1', text)
+        # 2. Fix contraction spacing (e.g., "do n't" -> "don't")
+        text = re.sub(r'\s+n\'t', r"n't", text)
+        # 3. Capitalize the first letter of the sentence
+        if len(text) > 0:
+            text = text[0].upper() + text[1:]
+            
+        return text
 
 
     
