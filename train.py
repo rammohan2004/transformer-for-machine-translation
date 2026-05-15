@@ -880,12 +880,12 @@ def run_training_experiment() -> None:
             wandb.run.summary['best_epoch']    = epoch
 
         # Also save every epoch checkpoint
-        epoch_ckpt = os.path.join(
+        '''epoch_ckpt = os.path.join(
             config.checkpoint_dir, f'epoch_{epoch+1}.pt'
         )
         save_checkpoint(model, optimizer,
                         scheduler or torch.optim.Adam(model.parameters()),
-                        epoch, epoch_ckpt)
+                        epoch, epoch_ckpt)'''
 
    # ── Experiment 2.3: Attention heatmaps ───────────────────────────
     print("\nLogging attention heatmaps...")
