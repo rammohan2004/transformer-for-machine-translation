@@ -591,7 +591,7 @@ class Transformer(nn.Module):
         Downloads weights from Google Drive and loads into this model.
         """
         # ⚠️ PASTE YOUR TRAINED MODEL'S DRIVE ID HERE
-        GDRIVE_FILE_ID = "1EmG4A4jEXrDC9BsuIMYS6QMi4_qWKiOl" 
+        GDRIVE_FILE_ID = "1ky_GZ_KEjMSgpX3077ggl16ZhdFh2cDY" 
 
         if not os.path.exists(checkpoint_path):
             print("Downloading weights from Google Drive...")
