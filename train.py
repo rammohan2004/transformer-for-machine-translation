@@ -826,9 +826,15 @@ def run_training_experiment() -> None:
     )
 
     # ── Checkpoint dir ───────────────────────────────────────────────
-    import os
+    '''import os
     os.makedirs(config.checkpoint_dir, exist_ok=True)
     best_val_loss = float('inf')
+    best_ckpt_path = os.path.join(config.checkpoint_dir, 'best_model.pt')'''
+    import os
+    os.makedirs(config.checkpoint_dir, exist_ok=True)
+    
+    # ⚠️ TRACK BLEU INSTEAD OF LOSS
+    best_val_bleu = 0.0   
     best_ckpt_path = os.path.join(config.checkpoint_dir, 'best_model.pt')
 
     # ── Training Loop ─────────────────────────────────────────────────
@@ -860,30 +866,27 @@ def run_training_experiment() -> None:
             device    = device,
         )
         
-
         print(f"  Train loss: {train_loss:.4f} | Val loss: {val_loss:.4f}")
+
+        # ── NEW: Evaluate BLEU every epoch and use it to save best model ──
+        print("  Evaluating Val BLEU...")
+        val_bleu = evaluate_bleu(model, val_loader, tgt_vocab, device)
+        print(f"  Val BLEU: {val_bleu:.2f}")
 
         # W&B: log epoch-level metrics
         wandb.log({
             'epoch/train_loss': train_loss,
             'epoch/val_loss'  : val_loss,
+            'val/bleu'        : val_bleu,
             'epoch'           : epoch,
         })
-        # Add inside training loop, every 5 epochs
-        if (epoch + 1) % 5 == 0:
-            val_bleu = evaluate_bleu(model, val_loader, tgt_vocab, device)
-            print(f"  Val BLEU: {val_bleu:.2f}")
-            wandb.log({'val/bleu': val_bleu, 'epoch': epoch})
 
-        # Save best checkpoint
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            '''save_checkpoint(model, optimizer, scheduler or
-                            torch.optim.Adam(model.parameters()),
-                            epoch, best_ckpt_path)'''
+        # ⚠️ Save best checkpoint based on highest BLEU
+        if val_bleu > best_val_bleu:
+            best_val_bleu = val_bleu
             save_checkpoint(model, optimizer, scheduler, epoch, best_ckpt_path)
-            print(f"  ✓ Best model saved (val_loss={val_loss:.4f})")
-            wandb.run.summary['best_val_loss'] = best_val_loss
+            print(f"  ✓ Best model saved (val_bleu={val_bleu:.2f})")
+            wandb.run.summary['best_val_bleu'] = best_val_bleu
             wandb.run.summary['best_epoch']    = epoch
 
         # Also save every epoch checkpoint
