@@ -589,15 +589,16 @@ def save_checkpoint(
         'epoch'               : epoch,
         'model_state_dict'    : model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
-        'scheduler_state_dict': scheduler.state_dict(),
-        'model_config'        : {
+        # None-safe — don't create a new optimizer!
+        'scheduler_state_dict': scheduler.state_dict() if scheduler is not None else None,
+        'model_config': {
             'src_vocab_size': model.src_vocab_size,
             'tgt_vocab_size': model.tgt_vocab_size,
             'd_model'       : model.d_model,
             'N'             : len(model.encoder.layers),
             'num_heads'     : model.encoder.layers[0].self_attn.num_heads,
             'd_ff'          : model.encoder.layers[0].ffn.linear1.out_features,
-            'dropout'       : 0.1,   # stored as fixed; not accessible post-init
+            'dropout'       : 0.1,
         },
     }, path)
     print(f"Checkpoint saved → {path}")
@@ -684,7 +685,6 @@ def run_training_experiment() -> None:
     # Training hyperparameters
     parser.add_argument('--batch_size',   type=int,   default=128)
     parser.add_argument('--num_epochs',   type=int,   default=15)
-    parser.add_argument('--warmup_steps', type=int,   default=4000)
     parser.add_argument('--lr',           type=float, default=None,
                         help='Fixed LR (overrides Noam). For experiment 2.1')
 
@@ -708,6 +708,7 @@ def run_training_experiment() -> None:
     # Checkpoint
     parser.add_argument('--checkpoint_dir', type=str, default='checkpoints')
     parser.add_argument('--save_best_only', type=int, default=1)
+    parser.add_argument('--warmup_steps', type=int, default=400)
 
     args = parser.parse_args()
 
@@ -868,13 +869,19 @@ def run_training_experiment() -> None:
             'epoch/val_loss'  : val_loss,
             'epoch'           : epoch,
         })
+        # Add inside training loop, every 5 epochs
+        if (epoch + 1) % 5 == 0:
+            val_bleu = evaluate_bleu(model, val_loader, tgt_vocab, device)
+            print(f"  Val BLEU: {val_bleu:.2f}")
+            wandb.log({'val/bleu': val_bleu, 'epoch': epoch})
 
         # Save best checkpoint
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            save_checkpoint(model, optimizer, scheduler or
+            '''save_checkpoint(model, optimizer, scheduler or
                             torch.optim.Adam(model.parameters()),
-                            epoch, best_ckpt_path)
+                            epoch, best_ckpt_path)'''
+            save_checkpoint(model, optimizer, scheduler, epoch, best_ckpt_path)
             print(f"  ✓ Best model saved (val_loss={val_loss:.4f})")
             wandb.run.summary['best_val_loss'] = best_val_loss
             wandb.run.summary['best_epoch']    = epoch

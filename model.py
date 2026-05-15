@@ -542,10 +542,10 @@ class Transformer(nn.Module):
         src_vocab_size: int   = None, 
         tgt_vocab_size: int   = None, 
         # ⚠️ CRITICAL: Ensure these defaults match your best trained model!
-        d_model:        int   = 512,  
-        N:              int   = 6,    
+        d_model:        int   = 256,  
+        N:              int   = 3,    
         num_heads:      int   = 8,
-        d_ff:           int   = 2048,
+        d_ff:           int   = 512,
         dropout:        float = 0.1,
         checkpoint_path: str = None,
         load_weights:    bool = True,
@@ -591,7 +591,7 @@ class Transformer(nn.Module):
         Downloads weights from Google Drive and loads into this model.
         """
         # ⚠️ PASTE YOUR TRAINED MODEL'S DRIVE ID HERE
-        GDRIVE_FILE_ID = "1AqNdsF1uJROk-bzAHYer_dRt6CYatuyQ" 
+        GDRIVE_FILE_ID = "11qkwYuNk5EeQDnoeG8YXY4WQgXcMNXMR" 
 
         if not os.path.exists(checkpoint_path):
             print("Downloading weights from Google Drive...")
