@@ -541,7 +541,7 @@ class Transformer(nn.Module):
         self,
         src_vocab_size: int   = None, 
         tgt_vocab_size: int   = None, 
-        # ⚠️ CRITICAL: Ensure these defaults match your best trained model!
+        # Ensure these defaults match your best trained model!
         d_model:        int   = 256,  #v8
         N:              int   = 3,    
         num_heads:      int   = 8,
@@ -590,7 +590,7 @@ class Transformer(nn.Module):
         """
         Downloads weights from Google Drive and loads into this model.
         """
-        # ⚠️ PASTE YOUR TRAINED MODEL'S DRIVE ID HERE
+        # drive link
         GDRIVE_FILE_ID = "1D0RnEXNj1WN-RKmMLc5v0KLKqIcAcTDu" 
 
         if not os.path.exists(checkpoint_path):
@@ -613,66 +613,7 @@ class Transformer(nn.Module):
             
         print(f"Checkpoint loaded successfully!")
 
-    '''def __init__(
-        self,
-        src_vocab_size: int   = None,   # if None, built from Multi30k train
-        tgt_vocab_size: int   = None,   # if None, built from Multi30k train
-        d_model:        int   = 512,
-        N:              int   = 6,
-        num_heads:      int   = 8,
-        d_ff:           int   = 2048,
-        dropout:        float = 0.1,
-        checkpoint_path: str  = None,
-    ) -> None:
-        super().__init__()
-
-        self.d_model = d_model
-
-        # ── Step 1: Load vocab + tokenizer (ALWAYS, per announcement) ─
-        # Must happen before building model so we know vocab sizes
-        # Also needed for infer() at test time
-        self._load_vocab_and_tokenizer()
-
-        # ── Step 2: Resolve vocab sizes ───────────────────────────────
-        # If caller passed explicit sizes use them, else use built vocab
-        if src_vocab_size is None:
-            src_vocab_size = len(self.src_vocab)
-        if tgt_vocab_size is None:
-            tgt_vocab_size = len(self.tgt_vocab)
-
-        self.src_vocab_size = src_vocab_size
-        self.tgt_vocab_size = tgt_vocab_size
-
-        # ── Step 3: Build model components ───────────────────────────
-        # Source and target token embeddings
-        self.src_embedding = nn.Embedding(src_vocab_size, d_model, padding_idx=1)
-        self.tgt_embedding = nn.Embedding(tgt_vocab_size, d_model, padding_idx=1)
-
-        # Positional encoding (sinusoidal, shared for src and tgt)
-        self.pos_encoding = PositionalEncoding(d_model, dropout)
-
-        # Encoder stack: N identical EncoderLayer modules
-        enc_layer = EncoderLayer(d_model, num_heads, d_ff, dropout)
-        self.encoder = Encoder(enc_layer, N)
-
-        # Decoder stack: N identical DecoderLayer modules
-        dec_layer = DecoderLayer(d_model, num_heads, d_ff, dropout)
-        self.decoder = Decoder(dec_layer, N)
-
-        # Final linear: maps d_model → tgt_vocab_size logits
-        self.output_projection = nn.Linear(d_model, tgt_vocab_size)
-
-        # ── Step 4: Load checkpoint if provided ──────────────────────
-        # Per announcement: download + load weights inside __init__
-        if checkpoint_path is not None:
-            gdown.download(
-                id="1ZDZteVNIwFpT5frpvgAWAlKAtcAooPTb",  # ← replace after training
-                output=checkpoint_path,
-                quiet=False
-            )
-            ckpt = torch.load(checkpoint_path, map_location='cpu')
-            self.load_state_dict(ckpt['model_state_dict'])
-            print(f"Loaded checkpoint from {checkpoint_path}") '''
+    
 
     # ── Internal helpers ──────────────────────────────────────────────
 
@@ -706,23 +647,7 @@ class Transformer(nn.Module):
 
 
 
-    '''def _load_checkpoint(self, checkpoint_path: str):
-        """
-        Downloads weights from Google Drive and loads into this model.
-        Per announcement: all weight loading inside __init__.
-        """
-        GDRIVE_FILE_ID = "1ZDZteVNIwFpT5frpvgAWAlKAtcAooPTb"  # replace after training
-
-        if not os.path.exists(checkpoint_path):
-            gdown.download(
-                id=GDRIVE_FILE_ID,
-                output=checkpoint_path,
-                quiet=False
-            )
-
-        ckpt = torch.load(checkpoint_path, map_location='cpu')
-        self.load_state_dict(ckpt['model_state_dict'])
-        print(f"Checkpoint loaded from {checkpoint_path}")'''
+  
 
     # ── AUTOGRADER HOOKS — do NOT modify signatures ───────────────────
 
@@ -949,17 +874,17 @@ if __name__ == "__main__":
     encoder    = Encoder(enc_layer, N=6)
     w0 = encoder.layers[0].self_attn.W_Q.weight
     w1 = encoder.layers[1].self_attn.W_Q.weight
-    print(torch.equal(w0, w1))   # must be False now ✅
+    print(torch.equal(w0, w1))   # must be False now 
 
     memory   = encoder(torch.randn(2, 10, 512), torch.zeros(2,1,1,10).bool())
-    print(memory.shape)          # [2, 10, 512] ✅
+    print(memory.shape)          # [2, 10, 512] 
 
     dec_layer  = DecoderLayer(d_model=512, num_heads=8, d_ff=2048, dropout=0.0)
     decoder    = Decoder(dec_layer, N=6)
     tgt_mask   = make_tgt_mask(torch.ones(2, 7).long() * 2)
     dec_out    = decoder(torch.randn(2,7,512), memory,
                          torch.zeros(2,1,1,10).bool(), tgt_mask)
-    print(dec_out.shape)         # [2, 7, 512] ✅
+    print(dec_out.shape)         # [2, 7, 512] 
 
 
     # Quick shape test with explicit vocab sizes (skips data download)

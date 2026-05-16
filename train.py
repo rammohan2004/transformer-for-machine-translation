@@ -833,7 +833,7 @@ def run_training_experiment() -> None:
     import os
     os.makedirs(config.checkpoint_dir, exist_ok=True)
     
-    # ⚠️ TRACK BLEU INSTEAD OF LOSS
+    # TRACK BLEU INSTEAD OF LOSS
     best_val_bleu = 0.0   
     best_ckpt_path = os.path.join(config.checkpoint_dir, 'best_model.pt')
 
