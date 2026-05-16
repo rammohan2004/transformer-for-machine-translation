@@ -921,6 +921,76 @@ def run_training_experiment() -> None:
 
 def _log_attention_heatmaps(model, val_loader, src_vocab, tgt_vocab, device):
     """
+    Experiment 2.3: Log INTERACTIVE attention heatmap using Plotly.
+    """
+    import wandb
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    import torch
+
+    model.eval()
+    with torch.no_grad():
+        # Get one batch, pick first sentence
+        src, tgt = next(iter(val_loader))
+        src = src[:1].to(device)   # [1, src_len]
+
+        src_mask = make_src_mask(src).to(device)
+
+        # Forward through encoder to populate attn_w in each layer
+        _ = model.encode(src, src_mask)
+
+        # Get attention weights from LAST encoder layer
+        last_layer = model.encoder.layers[-1]
+        attn_w = last_layer.self_attn.attn_w  # [1, num_heads, src_len, src_len]
+
+        # Convert src token indices → words for axis labels
+        src_tokens = [
+            src_vocab.itos.get(idx.item(), '<unk>')
+            for idx in src[0]
+            if idx.item() != 1   # skip PAD
+        ]
+
+        num_heads = attn_w.size(1)
+        n = len(src_tokens)
+
+        # Create 2x4 interactive subplots
+        fig = make_subplots(
+            rows=2, cols=num_heads // 2,
+            subplot_titles=[f"Head {h+1}" for h in range(num_heads)],
+            horizontal_spacing=0.05, vertical_spacing=0.15
+        )
+
+        for h in range(num_heads):
+            # Trim to non-pad length
+            head_attn = attn_w[0, h].cpu().numpy()[:n, :n]
+            
+            row = (h // (num_heads // 2)) + 1
+            col = (h % (num_heads // 2)) + 1
+
+            # Plotly heatmaps draw from bottom-up. We reverse Z and Y to draw top-down.
+            heatmap = go.Heatmap(
+                z=head_attn[::-1], 
+                x=src_tokens,
+                y=src_tokens[::-1], 
+                colorscale='Blues',
+                showscale=False,
+                hovertemplate="Target (Query): %{y}<br>Source (Key): %{x}<br>Weight: %{z:.4f}<extra></extra>"
+            )
+            fig.add_trace(heatmap, row=row, col=col)
+
+        fig.update_layout(
+            title_text='Interactive Attention Heads (Last Encoder Layer)',
+            height=800, width=1400,
+            plot_bgcolor='white'
+        )
+
+        # Log interactive plotly figure to W&B
+        wandb.log({'attention/interactive_encoder_layer': fig})
+        print("Interactive Attention heatmaps logged to W&B")
+        ''' 
+
+def _log_attention_heatmaps(model, val_loader, src_vocab, tgt_vocab, device):
+    """
     Experiment 2.3: Log attention heatmap for each head in last encoder layer.
     Picks one sample from val set and visualizes all heads.
     """
@@ -978,7 +1048,7 @@ def _log_attention_heatmaps(model, val_loader, src_vocab, tgt_vocab, device):
         plt.close(fig)
         print("Attention heatmaps logged to W&B")
 
-
+'''
 
 if __name__ == "__main__":
     run_training_experiment() 
