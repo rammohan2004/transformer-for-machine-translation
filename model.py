@@ -591,7 +591,7 @@ class Transformer(nn.Module):
         Downloads weights from Google Drive and loads into this model.
         """
         # ⚠️ PASTE YOUR TRAINED MODEL'S DRIVE ID HERE
-        GDRIVE_FILE_ID = "16IUIRKZm3s2Y1c-uJ8QLhelktdPk-F5o" 
+        GDRIVE_FILE_ID = "1D0RnEXNj1WN-RKmMLc5v0KLKqIcAcTDu" 
 
         if not os.path.exists(checkpoint_path):
             print("Downloading weights from Google Drive...")
@@ -858,7 +858,7 @@ class Transformer(nn.Module):
         # 1. Remove spaces before punctuation ( . , ! ? ; )
         text = re.sub(r'\s+([.,!?;\'])', r'\1', text)
         # 2. Fix contraction spacing (e.g., "do n't" -> "don't")
-        text = re.sub(r'\s+n\'t', r"n't", text)
+        text = re.sub(r"\s+(n't|'s|'m|'re|'ve|'ll|'d)\b", r"\1", text, flags=re.IGNORECASE)
         # 3. Capitalize the first letter of the sentence
         if len(text) > 0:
             text = text[0].upper() + text[1:]
